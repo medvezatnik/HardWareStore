@@ -1,0 +1,13 @@
+<?php
+
+class ControllerIndex extends Controller
+{
+
+    function actionIndex()
+    {
+
+      echo 1;
+    }
+
+
+}

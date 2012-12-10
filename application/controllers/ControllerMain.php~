@@ -1,0 +1,25 @@
+<?php
+
+class ControllerMain extends Controller
+{
+
+    function __construct()
+    {
+      $this->modelName = 'ModelMain';
+        
+    }
+ 
+ 
+    function actionIndex ()
+    {
+      $data = array();
+      $data['categories'] = $this->model->getTemplateCategories();
+      $data['specials'] = $this->model->getContentSpecials();
+      $data['newArrs'] = $this->model->getContentNewArr();      // New arrivals - новые поставки
+   
+      
+      $this->view->generate('TemplateMain.php','MainSC.php', $data);
+    }
+
+
+}

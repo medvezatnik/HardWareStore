@@ -1,0 +1,9 @@
+<fieldset>
+  <legend><strong>Товары</strong></legend>
+    <table>
+      <tr>
+       <td>Cоздать</td>
+       <td>Редактировать/Удалить</td>
+      </tr>
+    </table>
+</fieldset>

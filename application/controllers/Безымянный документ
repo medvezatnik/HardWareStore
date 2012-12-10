@@ -1,0 +1,11 @@
+<?php
+
+class ControllerStore extends Controller
+{
+
+    function __construct()
+    {
+      $this->modelName = 'ModelStore';
+        
+    }
+ 

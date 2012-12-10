@@ -1,0 +1,22 @@
+<?php
+
+class ModelMain extends Model
+{
+    function get_data()
+    {
+        return array(array(   
+                      'So fuck the world' => 'Now I feel a little better',
+                   'I don\' care what\'s' => 'On your mind',
+                           'I\m feelin\'' => 'happier today',
+                          ),
+                     array(
+                        'Kate' => 'Perm' ,
+                        'Olga' => 'Moscow',
+                        'Darine' => 'Perm',
+                          ),
+                   )
+
+
+    }
+
+}

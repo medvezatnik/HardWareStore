@@ -1,0 +1,62 @@
+<?php
+
+class ModelStatic extends Model
+{
+    private $dbc;
+ 
+    function __construct()
+    {
+      $this->dbc = PRA::connectDb();
+    }
+
+    function getTemplateCategories()
+    {
+       $data = array();
+     
+        try {
+
+            $categoryQuery = $this->dbc->prepare("SELECT * FROM categories" );      
+            $categoryQuery->execute();    
+        
+        } catch (PDOException $expMsg) {
+
+            die('Не могу выполнить запрос<br />' . $expMsg->__toString());
+        } 
+
+        while ($category = $categoryQuery->fetch())
+        {
+            $data[] = $category ;
+        }
+          
+        return $data;
+    }
+
+    function getPageContentByUrl($url)
+    {
+        
+        try {
+                $contentQuery = $this->dbc->prepare('SELECT page_content FROM static_pages WHERE page_url = :url');
+                $contentQuery->execute(array(':url' => $url));
+                
+                if ($contentQuery->rowCount() == 1) {
+                    $content = $contentQuery->fetch();
+                    
+                } else {
+                    $content = false;
+                }
+        
+            }   
+        
+            catch (PDOException $expMsg) {
+
+            die('Не могу выполнить запрос<br />' . $expMsg->__toString());
+        } 
+
+        return $content['page_content'];
+
+    }
+
+
+
+
+}

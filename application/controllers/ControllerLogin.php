@@ -1,0 +1,238 @@
+<?php 
+
+class ControllerLogin extends Controller
+{
+
+    function __construct()
+    {
+        $this->modelName = 'ModelLogin';
+        
+    }
+    
+
+    function actionbobobo()
+    {
+        if ( (!empty($_POST['username'])) && (!empty($_POST['password'])) && (isset($_POST['submit']))  ) {
+             
+              if ( ($_POST['username'] ==  'admin')  && ($_POST['password'] == '1234') )  {
+                  session_start();
+                  $_SESSION['cookie'] = '1234';
+                  
+                  header('Location: Admin/');
+              }
+              else {
+                  $data['authErrorMsg'] = 'Пользователя с такими именем и паролем не существует';
+                  $this->view->generate('templateView.php','ViewLogin.php',$data);
+              }
+          }
+          else {
+              $this->view->generate('templateView.php','ViewLogin.php');
+          }
+    }
+  
+    function actionRegistration()
+    {
+        $data['categories'] = $this->model->getTemplateCategories();
+        
+        $this->view->generate('TemplateMain.php','RegistrationView.php', $data);
+
+        
+    }
+ 
+    function actionAdduser()
+    {
+        
+
+        $_SESSION['error'] = '';
+        if (empty($_POST['firstname']) || empty($_POST['lastname']) || empty($_POST['email'])) {
+            
+            $_SESSION['error'] .= 'Вы не до конца ввели ваши личные данные.<br />';
+        }
+
+        if (empty($_POST['city']) || empty($_POST['region']) || empty($_POST['postcode']) 
+                                   || empty($_POST['street_address']) || empty($_POST['country'])) {
+             $_SESSION['error'] .= 'Вы не до конца ввели адресс доставки.<br />';  
+        }
+
+        if (empty($_POST['mobile_phone']) && empty($_POST['phone'])){
+            
+             $_SESSION['error'] .= 'Нужно ввести хотя бы один телефон<br />'; 
+        }
+
+         if ($this->model->getUsersNumByEmail($_POST['email']) <> 0){
+              $_SESSION['error'] .= 'На этот электронный адресс уже зарегистрирован аккаунт<br />';
+         }
+
+         if (empty($_POST['password1']) || empty($_POST['password2'])) {      
+               $_SESSION['error'] .= 'Не хватает пароля или двух ;)<br />';
+         }
+
+         if ($_POST['password1'] <> $_POST['password2']) {      
+               $_SESSION['error'] .= 'Ваши пароли не совпадают<br />';
+         }
+
+         if (!filter_var($_POST['email'], FILTER_VALIDATE_EMAIL))
+         {
+             $_SESSION['error'] .= 'Введите валидный имеил<br />';
+         }
+
+         if (strlen($_POST['password1']) < 5)
+         {
+             $_SESSION['error'] .= 'Ваш пароль должен быть не короче 5 символов<br />';
+         }
+
+         if ($_SESSION['error'] == '') {
+             session_destroy();
+             $this->model->addNewUser($_POST);
+             
+             $data['categories'] = $this->model->getTemplateCategories();
+
+             $data['msg'] = 'Поздравляем, вы успешно зарегистрировались у нас на сайте ! ';
+             $this->view->generate('TemplateMain.php','AdduserView.php', $data);
+         }
+         else {
+          
+             if (!empty($_POST['submit'])) {    
+                  unset($_POST['password1']);
+                  unset($_POST['password2']);
+                  foreach ($_POST as $key => $value)
+                  {
+                      $_SESSION[$key] = $value;
+                  }
+                  
+              }    
+               header('Location: /Login/registration');
+         }
+        
+
+      
+       
+    }
+
+
+    function actionSignIn()
+    {
+      if (!empty($_POST['signin_email']) && !empty($_POST['signin_password'])) {
+   
+        if ($this->model->userExists($_POST['signin_email'], $_POST['signin_password'])) {
+ 
+            //В случае удачи метод возвращает куку, в случае неудачи 0
+            $userCookie = $this->model->insertNewUserCookie($_POST['signin_email'], $_POST['signin_password']);
+
+            if ($userCookie) {
+
+                $userData = $this->model->getUserDataByCookie($userCookie);
+
+                setcookie('userCookie',$userCookie, time()+3600, '/');
+                setcookie('userName',$userData['firstname'], time()+3600, '/');
+                setcookie('userId',$userData['user_id'], time()+3600, '/');
+                $_SESSION['userCookie'] = $userCookie;
+                $_SESSION['userName'] = $userData['firstname'];
+                header('Location: /');
+
+            } else {
+                $data['error'] =  "Невозможно установить куку";
+                
+            }
+
+        } else {
+           $data['error'] =  "Юзера с такими данными не существует";
+        }
+
+        } else {
+            $data['error'] = "Одно из полей авторизации осталось пустым";
+        }
+
+        $data['categories'] = $this->model->getTemplateCategories();
+      
+        $this->view->generate('TemplateMain.php','AutherrorView.php', $data);
+     
+    }
+
+    function actionDebug()
+    {
+        print_r($_COOKIE);
+        print_r($_SESSION);
+    }
+
+    function actionSignOut()
+    {
+        setcookie('userCookie',$userCookie, time()-1, '/');
+        setcookie('userName',$userData['firstname'], time()-1, '/');
+        setcookie('userId',$userData['user_id'], time()-1, '/');
+        session_destroy();
+        header('Location: /');
+    }
+
+    function actionMyAccount()
+    {
+       $data['categories'] = $this->model->getTemplateCategories();
+       if (!empty($_SESSION['userCookie'])) {
+           $data['userData'] = $this->model->getUserDataByCookie($_SESSION['userCookie']);
+       
+           $this->view->generate('TemplateMain.php','MyaccountView.php', $data);
+       } else {
+       
+         $this->view->generate('TemplateMain.php','AutherrorView.php', $data);
+       }
+
+    }
+
+    function actionChangeUserData()
+    {
+        
+
+        if (!empty($_SESSION['userCookie'])) {
+            if (empty($_POST['city']) || empty($_POST['region']) || empty($_POST['postcode']) 
+                                       || empty($_POST['street_address']) || empty($_POST['country'])) {
+                 $_SESSION['error'] .= 'Вы не до конца ввели адресс доставки.<br />';  
+            }
+
+            if (empty($_POST['mobile_phone']) && empty($_POST['phone'])){
+            
+                 $_SESSION['error'] .= 'Нужно ввести хотя бы один телефон<br />'; 
+            }
+
+      
+
+             if ($_POST['password1'] <> $_POST['password2']) {      
+                   $_SESSION['error'] .= 'Ваши пароли не совпадают<br />';
+             }
+
+
+             if (strlen($_POST['password1']) < 5 && strlen($_POST['password1']) <> 0)
+             {
+                 $_SESSION['error'] .= 'Ваш пароль должен быть не короче 5 символов<br />';
+             }
+
+             if ($_SESSION['error'] == '') {
+                 
+                 $this->model->changeUserData($_POST);
+             
+                 $data['categories'] = $this->model->getTemplateCategories();
+                 $data['msg'] = 'Вы успешно изменили настройки своего аккаунта';
+                 $this->view->generate('TemplateMain.php','AdduserView.php', $data);
+             }
+             else {
+              
+                 if (!empty($_POST['submit'])) {    
+                      unset($_POST['password1']);
+                      unset($_POST['password2']);
+                      foreach ($_POST as $key => $value)
+                      {
+                          $_SESSION[$key] = $value;
+                      }
+                      
+                  }    
+                   header('Location: /Login/myaccount');
+             }
+        
+
+          
+           } else { 
+            $data['msg'] = 'Что изменить ';
+            $this->view->generate('TemplateMain.php','AutherrorView.php', $data);    
+       }
+    }
+}
+

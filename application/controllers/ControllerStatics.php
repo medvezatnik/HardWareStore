@@ -1,0 +1,161 @@
+<?php
+
+class ControllerStatics extends Controller
+{
+    function __construct()
+    {
+        $this->modelName = "ModelStatics";
+    }
+
+    function actionIndex()
+    {
+        if (PRA::IsAuthorized()) {
+            $data['staticPages'] = $this->model->getStaticPages();
+            $this->view->generate('TemplateAdmin.php','IndexView.php',$data);
+        } else {
+            $this->view->generate('Template404.php','IndexView.php');
+        }
+    }
+
+    function actionEdit($actionParams)
+    {
+        if (PRA::IsAuthorized()) {
+            if (isset($actionParams['id'])) {
+                if ($this->model->doesStaticPageExist($actionParams['id'])) {
+                    $data['staticPage'] = $this->model->getStaticPageById($actionParams['id']);
+                    $this->view->generate('TemplateAdmin.php','EditView.php',$data);
+                } else {
+                    $data['msg'] = 'Cтраницы с таким идентификационным номером не существует';
+                    $this->view->generate('TemplateAdmin.php','ErrorView.php', $data);
+                }
+            } else {
+                $data['msg'] = 'Идентификационный номер редактируемой страницы не указан';
+                $this->view->generate('TemplateAdmin.php','ErrorView.php', $data);
+            }
+        } else {
+            $this->view->generate('Template404.php','IndexView.php');
+        }
+
+    }
+
+    function actionDoEdit($actionParams) 
+    {
+         if (PRA::IsAuthorized()) {
+             if (isset($actionParams['id'])) {
+                if ($this->model->doesStaticPageExist($actionParams['id'])) {
+                    if($this->model->updateStaticPage($_POST)) {
+                        $_SESSION['msg'] = 'Страница успешно обновлена';
+                        header('Location: /statics/');
+                    }
+                } else {
+                    $data['msg'] = 'Старницы с таким идентификационным номером не существует';
+                    $this->view->generate('TemplateAdmin.php','ErrorView.php', $data);
+                }
+            } else {
+                $data['msg'] = 'Идентификационный номер редактируемой страницы не указан';
+                $this->view->generate('TemplateAdmin.php','ErrorView.php', $data);
+            }
+        } else {
+            $this->view->generate('Template404.php','IndexView.php');
+        }
+    }
+
+    function actionDelete($actionParams)
+    {
+        if (PRA::IsAuthorized()) {
+            if (isset($actionParams['id'])) {
+                if ($this->model->doesStaticPageExist($actionParams['id'])) {
+                    $data['pageId'] = $actionParams['id'];
+                    $this->view->generate('TemplateAdmin.php','DeleteView.php', $data);
+                } else {
+                    $data['msg'] = 'Cтраницы с таким идентификационным номером не существует';
+                    $this->view->generate('TemplateAdmin.php','ErrorView.php', $data);
+                }
+            } else {
+                $data['msg'] = 'Идентификационный номер редактируемой страницы не указан';
+                $this->view->generate('TemplateAdmin.php','ErrorView.php', $data);
+            }
+        } else {
+            $this->view->generate('Template404.php','IndexView.php');
+        }
+    }  
+
+    function actionDoDelete($actionParams)
+    {
+         if (PRA::IsAuthorized()) {
+             if ($_POST['submit'] == 'Нет' || !isset($_POST['submit'])) {
+                 header('Location: /statics/');
+             } else {
+                  if ($_POST['submit'] == 'Да') {      
+                      if ($this->model->doesStaticPageExist($actionParams['id'])) {   
+                          if ($this->model->deleteStaticPage($actionParams['id'])) {
+                              $result = true;
+                          } else {
+                              $result = false;
+                          }
+                      
+                      } else {
+                          $result = false;
+                      }
+        
+                      if ($result) {
+                          $_SESSION['msg'] = 'Страница успешно удалена';
+                          header('Location: /statics/');
+                      } else {
+                          $data['msg'] = 'Не получается удалить страницу. Вы что-то делаете не так.';          
+                          $this->view->generate('TemplateAdmin.php','DeleteView.php', $data);
+                      }
+            } }
+        } else {
+            $this->view->generate('Template404.php','IndexView.php');
+        }
+    }  
+
+    function actionCreate()
+    {
+        if (PRA::IsAuthorized()) {
+            $this->view->generate('TemplateAdmin.php','CreateView.php');
+        } else {
+            $this->view->generate('Template404.php','IndexView.php');
+        }
+    }
+
+    function actionDoCreate()
+    {   
+        if (PRA::IsAuthorized()) {
+            if (!empty($_POST['pageTitle']) && !empty($_POST['pageTitle']) && !empty($_POST['pageUrl'])) {
+                if (preg_match('/^[a-zA-Z-]+$/', $_POST['pageUrl'])) {
+                    if ($this->model->isStaticPageNameUnique($_POST['pageUrl'])){
+                        if ( $this->model->createStaticPage($_POST) ) {
+                            $result = true;
+                            $_SESSION['msg'] = 'Страница успешно cоздана';
+                        } else {
+                            $result = false; 
+                            $data['msg'] = 'Что-то пошло не так во время создания страницы';          
+                        }
+                     } else {
+                         $result = false; 
+                         $data['msg'] = 'Cтраница с таким URL уже существует';          
+                     }
+                } else {
+                    $result = false;
+                    $data['msg'] = 'В заголовке разрешены только латинские буквы и тире';
+                }
+            } else {
+                $result = false;
+                $data['msg'] = 'Вы должны заполнить все поля для создания страницы';          
+            
+            }
+    
+            if ($result) {
+                header('Location: /statics/');
+            } else {
+                $this->view->generate('TemplateAdmin.php','ErrorView.php', $data);
+            }
+        } else {
+            $this->view->generate('Template404.php','IndexView.php');
+        }      
+    }
+
+
+}

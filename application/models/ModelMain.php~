@@ -1,0 +1,137 @@
+<?php
+
+class ModelMain extends Model
+{
+    private $dbc; 
+    private $query;
+
+    function __construct()
+    {
+      try {
+          $this->dbc = new PDO('mysql:host=localhost;dbname=hardwareStore;charset=utf8','root','xtkz,f');
+      } catch (PDOException $expMsg) {
+          die('Не могу подключиться к базе данных<br />'.$expMsg->getMessage());
+      }
+       $this->dbc->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+       $this->dbc->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    }
+
+    function getUserData($key, $value = '')
+    {
+        $result = array();
+        
+        try {
+
+            $query = $this->dbc->prepare("SELECT * FROM mismatch_user WHERE user_id = :value" );
+            $query->bindValue(':value', '20');
+            $query->execute();
+
+        } catch (PDOException $expMsg) {
+          die('Не могу выполнить запрос<br />' . $expMsg->__toString());
+        }
+      
+        while ($row = $query->fetch())
+        {
+            $result[] = $row;
+        }
+          
+        return $result;
+    }
+
+   
+
+    function getTemplateCategories()
+    {
+       $data = array();
+     
+        try {
+
+            $categoryQuery = $this->dbc->prepare("SELECT * FROM categories" );      
+            $categoryQuery->execute();    
+        
+        } catch (PDOException $expMsg) {
+
+            die('Не могу выполнить запрос<br />' . $expMsg->__toString());
+        } 
+
+        while ($category = $categoryQuery->fetch())
+        {
+            $data[] = $category ;
+        }
+          
+        return $data;
+    }
+
+
+    function getContentSpecials()
+    {
+      
+        $data = array();
+     
+        try {
+
+            $specialsQuery = $this->dbc->prepare("SELECT product_id, name, picture FROM products WHERE special = 1 LIMIT 4" );
+            $specialsQuery->execute();
+        } catch (PDOException $expMsg) {
+
+            die('Не могу выполнить запрос<br />' . $expMsg->__toString());
+        } 
+
+        while ($special = $specialsQuery->fetch())
+        {
+            $data[] = $special ;
+        }
+    
+        return $data;
+
+
+    }
+
+
+
+    function getContentNewArr()
+    {
+        $data = array();
+
+        try {
+
+            $newArrQuery = $this->dbc->prepare("SELECT product_id, name, picture, price FROM products ORDER BY date_added DESC LIMIT 9" );
+            $newArrQuery->execute();
+        } catch (PDOException $expMsg) {
+
+            die('Не могу выполнить запрос<br />' . $expMsg->__toString());
+        } 
+
+        while ($newArr = $newArrQuery->fetch())
+        {
+            $data[] = $newArr ;
+        }
+    
+        return $data;
+    }
+
+    function getGoodsByCat($cat_id)
+    {
+        data = array();
+
+        try {
+
+            $goodsByCatQuery = $this->dbc->prepare("SELECT product_id, name, picture, price, category_id FROM products WHERE category_id = :cat_id" );
+                
+            $goodsByCatQuery->execute(array(':cat_id' => $cat_id));
+
+        } catch (PDOException $expMsg) {
+
+            die('Не могу выполнить запрос<br />' . $expMsg->__toString());
+        } 
+
+        while ($goodsByCat = $goodsByCatQuery->fetch())
+        {
+            $data[] = $goodsByCat ;
+        }
+    
+        return $data;
+
+    }
+    
+}

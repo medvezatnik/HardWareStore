@@ -1,0 +1,85 @@
+<?php
+class ControllerCart extends Controller 
+{
+    private $dbc;
+
+    function __construct()
+    {
+      $this->modelName = 'ModelCart';
+    
+    }
+
+    function actionAdd($actionParams)
+    {
+        if ($this->model->productExists($actionParams['productid'])) {
+              $_SESSION['cart'][$actionParams['productid']] += 1;
+              $_SESSION['cart_count'] += 1;
+            
+            
+            $_SESSION['msg'] = "ВЫ УСПЕШНО ДОБАВИЛИ ДАННЫЙ ТОВАР В КОРЗИНУ";
+            header('Location:/store/product/id/' . $actionParams['productid']);
+            
+        } else {
+            header('Location: /');
+        }
+       
+        
+    }
+
+    function actionShow()
+    {
+        $data['categories'] = $this->model->getTemplateCategories();
+        if (!empty($_SESSION['userCookie'])) {
+            if (!empty($_SESSION['cart_count'])) {
+                $data['shoplist'] = $this->model->getCartList($_SESSION['cart']); 
+                $this->view->generate('TemplateMain.php','ShowView.php', $data);
+            } else {
+                $data['error'] = "В вашу корзину не было добавлено ни одного товара";
+                $this->view->generate('TemplateMain.php','ErrorView.php', $data);
+            }
+        } else {
+            $data['error'] = "Для просмотра козрины вам необходимо авторизироваться";
+            $this->view->generate('TemplateMain.php','ErrorView.php', $data);
+        }
+
+    }
+
+    function actionOrder()
+    {
+        
+        $data['categories'] = $this->model->getTemplateCategories();
+        $data['products'] = $_POST;
+
+        if (!empty($_SESSION['userCookie'])) {
+            if (!empty($_SESSION['userCookie'])) {
+                $userId = $this->model->getUserIdByCookie($_SESSION['userCookie']);   
+                if ($this->model->areParamsValid($data['products'])) {
+                    if ($this->model->isOrderProcessable($userId, $data['products'])) {
+                        if ($this->model->sendOrder($userId, $data['products'])) {
+                            $data['userAddress'] = $this->model->getUserAddressByCookie($_SESSION['userCookie']);
+                            $this->view->generate('TemplateMain.php','OrderView.php', $data);
+                        } else {
+                            $data['error'] = "Во время покупки что-то пошло не так, попробуйте еще раз. Не волнуйтесь, с вашими деньгами все в порядке";
+                            $this->view->generate('TemplateMain.php','ErrorView.php', $data);
+                        }
+                             
+                    } else {
+                        $data['error'] = "На вашем счету недостаточно средств для совершения данной покупки";
+                        $this->view->generate('TemplateMain.php','ErrorView.php', $data);
+                        
+                    }
+                } else {
+                    $data['error'] = "Введите целое количество товара";
+                    $this->view->generate('TemplateMain.php','ErrorView.php', $data);
+                }
+        
+            }
+
+        }
+    }
+
+
+
+
+
+}

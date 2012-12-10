@@ -1,0 +1,19 @@
+<?php
+
+class ControllerProduct extends Controller
+{
+
+    function __construct
+    {
+        $this->modelName = 'ModelMain';
+    }
+
+    function actionId($id = 1;)
+    {
+      echo 1;
+
+    }
+
+
+
+}

@@ -1,0 +1,80 @@
+<?php 
+class ModelAdmin extends Model
+{
+    private $dbc;
+
+    function __construct()
+    {
+        $this->dbc = PRA::connectDb();
+    }
+
+    function getProductList($page, $pageProd)
+    {
+       try {
+            
+            $productQuery = $this->dbc->prepare("SELECT * FROM products" );
+            $productQuery->execute();
+            $products = $productQuery->rowCount();
+            
+            if (ceil($products / $pageProd) < $page) {
+                return 0;
+            }
+            
+            $productQuery = $this->dbc->prepare("SELECT * FROM products LIMIT :startProd, :pageProd" );
+            
+            $productQuery->bindValue(':startProd', ($page-1)*$pageProd, PDO::PARAM_INT);
+            $productQuery->bindValue(':pageProd', $pageProd, PDO::PARAM_INT);
+            $productQuery->execute();
+
+            $products = array();
+            while($product = $productQuery->fetch())
+            {
+                $products[] = $product;
+            }
+
+        } catch (PDOException $expMsg) {
+          die('Не могу выполнить запрос<br />' . $expMsg->__toString());
+        }
+         
+    
+        return $products;
+    }
+
+    function getPaginationList($prodOnPage, $neighbours=0, $page=0)
+    {
+        try {
+
+            $productQuery = $this->dbc->prepare("SELECT COUNT(*) AS 'counter' FROM products" );
+            $productQuery->execute();
+            $products = $productQuery->fetch();
+            $products = $products['counter'];
+            $pages = ceil($products/$prodOnPage);
+
+            if ($page <  0) {
+                $page = 1;
+            } elseif ($page > $pages) {
+                $page = $pages;
+            }
+            $leftNeighbour = $page - $neighbours;
+            if ($leftNeighbour < 1) {
+                $leftNeighbour = 1;
+            }
+            $rightNeighbour = $page + $neighbours;
+            if ($rightNeighbour > $pages) {
+                $rightNeighbour = $pages;
+            }
+            $pageArr = array();
+            for ($i=$leftNeighbour;$i<=$rightNeighbour;$i++)
+            {
+                $pageArr[] = $i;
+            }
+
+        } catch (PDOException $expMsg) {
+          die('Не могу выполнить запрос<br />' . $expMsg->__toString());
+        }
+         
+        
+        return $pageArr;
+    }
+
+}
